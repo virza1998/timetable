@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Для русского языка
 
-void main() => runApp(const MaterialApp(home: TodoApp()));
+void main() async {
+  // Инициализируем локализацию, чтобы дни недели были на русском
+  await initializeDateFormatting('ru_RU', null);
+  runApp(const MaterialApp(home: TodoApp()));
+}
 
 class TodoApp extends StatefulWidget {
   const TodoApp({super.key});
@@ -11,7 +16,6 @@ class TodoApp extends StatefulWidget {
 }
 
 class _TodoAppState extends State<TodoApp> {
-  // Хранилище для состояний галочек
   Map<String, bool> checkStates = {};
 
   @override
@@ -20,11 +24,14 @@ class _TodoAppState extends State<TodoApp> {
     int hour = now.hour;
     int month = now.month;
     
-    // Определяем смену и сезон
     bool isDay = hour >= 8 && hour < 20;
     bool isWinter = month >= 10 || month <= 4;
 
-    // Списки задач: Приемка-сдача смены
+    // Формируем данные для плашки сверху
+    String shiftTitle = isDay ? "ДНЕВНАЯ СМЕНА" : "НОЧНАЯ СМЕНА";
+    String seasonInfo = isWinter ? "ОЗП (ЗИМА)" : "ЛЕТО";
+    String dateInfo = DateFormat('dd.MM (EEEE)', 'ru_RU').format(now);
+
     List<String> receptionTasks = [
       "сигнализация исправности цепей управления выключателями",
       "исправность и наличие опертока на защитах",
@@ -32,7 +39,7 @@ class _TodoAppState extends State<TodoApp> {
       "исправность аварийной, предупредительной и световой сигнализации на ЦС",
       "исправность сигнализации положения выключателей",
       "контроль нагрузки: ВЛ 500, 220, 110; 1АТ, 2АТ, 3АТ, 4АТ, 5-6АТГ; напряжение 500/220/110/10/0,4кВ",
-      "исправность  3U0 на ТН-500, ТН-220, ТН-110",
+      "исправность 3U0 на ТН-500, ТН-220, ТН-110",
       "замер тока небаланса ДЗШ-110, ДЗШ-220, ДЗО-500, КИВ-500 5-6АТГ",
       "осмотр АУПС на отсутствие неисправностей и сигналов на пультах",
       "ЩСН: уровни напряжения, нагрузка 1, 2, 4, 5, 6 ТСН",
@@ -48,14 +55,12 @@ class _TodoAppState extends State<TodoApp> {
       "Проверка схем: АРМ, макет ПС, водоснабжение и пожаротушение"
     ];
 
-    // Ежесменные осмотры
     List<String> periodicTasks = [
       "Панели управления, ЦС, РЗА, АСУТП, ТМ, ТС, учета",
       "1ЩСН, 1АБ, 2АБ, ЩПТ, помещения ОПУ",
       "1-2ПЖТ, 1-3КПЗ, 1-2 скважины, 2ЩСН, ЗРП, ЗПП"
     ];
 
-    // Добавляем специфические задачи по времени и сезону
     if (isDay) {
       periodicTasks.insert(0, "ОСМОТР: 5АТГ, 6АТГ, 1АТ, 2АТ, 3АТ, 4АТ");
       if (isWinter) periodicTasks.add("ДГУ: контроль работы обогрев. устройств");
@@ -65,7 +70,14 @@ class _TodoAppState extends State<TodoApp> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isDay ? "ДНЕВНАЯ СМЕНА" : "НОЧНАЯ СМЕНА"),
+        toolbarHeight: 70, // Увеличили высоту для двух строк
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(shiftTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("$seasonInfo | $dateInfo", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w300)),
+          ],
+        ),
         backgroundColor: isDay ? Colors.orange[400] : Colors.indigo[700],
       ),
       body: SingleChildScrollView(
